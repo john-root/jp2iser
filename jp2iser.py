@@ -6,7 +6,7 @@ import random
 from settings import *
 from PIL import Image
 from PIL.ImageFile import Parser
-import string 
+import string
 import subprocess
 from jp2_info import Jp2Info
 import tempfile
@@ -15,46 +15,46 @@ def path_parts(filepath):
     head, filename = os.path.split(filepath)
     namepart, extension = os.path.splitext(filename)
     return (head, filename, namepart, extension.lower()[1:])
-    
+
 
 def process(filepath, bound_jpegs=[]):
     # Convert image file into tile-optimised JP2 and optionally additional derivatives
     start = time.clock()
-          
+
     head, filename, namepart, extension = path_parts(filepath)
     print '%s  -- [%s] - %s.%s' % (head, filename, namepart, extension)
-    
+
     jp2path = os.path.join(OUTPUT_DIR, namepart + '.jp2')
     print 'Converting', filename
     print 'We want to make a JP2 at', jp2path
-    
+
     if is_tile_optimised_jp2(filepath, extension):
-        print filename, 'is already optimised for tiles, proceeding to next stage' 
+        print filename, 'is already optimised for tiles, proceeding to next stage'
         shutil.copyfile(filepath, jp2path)
-    else:    
+    else:
         kdu_ready = get_kdu_ready_file(filepath, extension)
         make_jp2_from_image(kdu_ready, jp2path)
         if filepath != kdu_ready:
             # TODO - do this properly
             print 'removing', kdu_ready, 'as it was a temporary file'
             os.remove(kdu_ready)
-        
+
     if len(bound_jpegs) > 0:
         make_derivatives(jp2path, bound_jpegs)
-        
+
     elapsed = time.clock() - start
     print 'operation time', elapsed
-        
+
 
 
 def is_tile_optimised_jp2(filepath, extension):
     # test the file - is it a JP2? If so, does it need optimising?
     # TODO: for now always assume that JP2 files are good to go
     return extension == 'jp2'
-    
+
 
 def get_kdu_ready_file(filepath, extension):
-    # From kdu_compress -usage:    
+    # From kdu_compress -usage:
     # 'Currently accepted image file formats are: TIFF (including BigTIFF),
     #  RAW (big-endian), RAWL (little-endian), BMP, PBM, PGM and PPM, as
     #  determined by the file suffix.'
@@ -71,15 +71,15 @@ def get_kdu_ready_file(filepath, extension):
         filepath = get_tiff_from_kdu(filepath)
     else:
         filepath = get_tiff_from_pillow(filepath)
-    
+
     return filepath
-    
-    
+
+
 def get_output_file_path(filepath, new_extension):
     # use tmp directory, not like this!
     head, filename, namepart, extension = path_parts(filepath)
     return os.path.join(OUTPUT_DIR, namepart + '.' + new_extension)
-    
+
 
 def mock_file(filepath, new_extension):
     print 'creating mock file with extension', new_extension
@@ -89,10 +89,10 @@ def mock_file(filepath, new_extension):
 
 
 def get_tiff_from_pillow(filepath):
-    print 'making tiff using pillow from', filepath    
+    print 'making tiff using pillow from', filepath
     new_file_path = get_output_file_path(filepath, 'tiff')
     im = Image.open(filepath)
-    im.save(new_file_path, compression=None)
+    im.save(new_file_path) # , compression=None)
     return new_file_path
 
 
@@ -103,8 +103,8 @@ def get_tiff_from_kdu(filepath):
     #    'PATH': KDU_EXPAND
     # }
     return mock_file(filepath, 'tiff')
-    
-    
+
+
 def make_jp2_from_image(kdu_ready_image, jp2path):
     print 'making jp2 using kdu from', kdu_ready_image
     compress_env = {
@@ -116,14 +116,14 @@ def make_jp2_from_image(kdu_ready_image, jp2path):
     res = subprocess.check_call(cmd, shell=True, env=compress_env)
     print 'subprocess returned', res
 
-    
+
 def make_derivatives(jp2path, bound_sizes):
     # bound_sizes should be a list of ints (square confinement)
     # make the first one from kdu_expand, then use Pillow to resize further
     # Note that Pillow's im.thumbnail function is really fast but doesn't
     # make very good quality thumbs; the PIL.Image.ANTIALIAS option
     # gives better results.
-    
+
     # This could also be multi-threaded - BUT better for this process (jp2iser)
     # to be running on multiple threads and control it that way
     # i.e., a machine is processing this off the queue in parallel.
@@ -138,35 +138,35 @@ def make_derivatives(jp2path, bound_sizes):
         else:
             req_w, req_h = confine(jp2.width, jp2.height, size, size)
             im = im.resize((req_w, req_h), resample=Image.ANTIALIAS)
-            
+
         jpg = prefix + str(size) + '.jpg'
         print 'saving', jpg
         im.save(jpg, quality=90)
-    
-   
+
+
 def get_reduced_image_from_kdu(jp2, size):
     # This is basically like an IIIF op /full/!size,size/0/default.jpg
     # uses kdu via fifo as per Loris
     # returns PIL image object
     print 'making new pillow image for derivs at size', size
     im = None
-    # extract the smallest possible resolution as the starting point for our transform ops    
+    # extract the smallest possible resolution as the starting point for our transform ops
     req_w, req_h = confine(jp2.width, jp2.height, size, size)
-    
+
     # mostly taken from transforms.py in Loris, but we want to return a Pillow image
     # color profile stuff has been removed for now
-    
+
     n = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(6))
     fifo_fp = os.path.join(TMP_DIR, n + '.bmp')
 
     # kdu command
-    q = '' # '-quiet'    
-    t = '-num_threads 4' 
+    q = '' # '-quiet'
+    t = '-num_threads 4'
     i = '-i "%s"' % (jp2.path,)
     o = '-o %s' % (fifo_fp,)
     reduce_arg = scales_to_reduce_arg(jp2, size)
     red = '-reduce %s' % (reduce_arg,) if reduce_arg else ''
-    
+
     # kdu_expand -usage:
     # -reduce <discard levels>
     #    Set the number of highest resolution levels to be discarded.  The image
@@ -180,7 +180,7 @@ def get_reduced_image_from_kdu(jp2, size):
     mkfifo_call = '%s %s' % (MKFIFO, fifo_fp)
     print 'Calling %s' % (mkfifo_call,)
     resp = subprocess.check_call(mkfifo_call, shell=True)
-    
+
     expand_env = {
         'LD_LIBRARY_PATH': KDU_LIB,
         'PATH': KDU_EXPAND
@@ -214,9 +214,9 @@ def get_reduced_image_from_kdu(jp2, size):
 
         imw, imh = im.size
         print 'we now have a PIL image %s x %s' % (imw, imh)
-        if imw != req_w or imh != req_h:            
+        if imw != req_w or imh != req_h:
             im = im.resize((req_w, req_h), resample=Image.ANTIALIAS)
-            
+
     except:
         raise
     finally:
@@ -240,15 +240,15 @@ def scales_to_reduce_arg(jp2, size):
         reduce_arg = int(log(closest_scale, 2))
         arg = str(reduce_arg)
     return arg
- 
+
 def confine(w, h, req_w, req_h):
-    # reduce longest edge to size    
+    # reduce longest edge to size
     if w <= req_w and h <= req_h:
         return (w, h)
-        
+
     scale = min(req_w / (1.0 * w), req_h / (1.0 * h))
     return tuple(map(lambda d: int(round(d * scale)), [w, h]))
-    
+
 
 def get_closest_scale(req_w, req_h, full_w, full_h, scales):
     if req_w > full_w or req_h > full_h:
@@ -259,14 +259,14 @@ def get_closest_scale(req_w, req_h, full_w, full_h, scales):
 
 def scale_dim(dim, scale):
     return int(ceil(dim/float(scale)))
-       
 
-    
+
+
 
 def rasterise_pdf(pdfFile):
     print('not yet implemented. Will use Ghostscript and Pillow to create a tiff.')
     raise ValueError('no PDFs just yet')
-    
+
 
 
 if __name__ == "__main__":
