@@ -50,5 +50,6 @@ $ python jp2iser.py /path/to/my_image.tiff 400 200 100
 ### TODO
 
 * implement rasterise_pdf using GhostScript
-* Logic for determining whether the 
+* Logic for determining whether, if already a JP2, we accept as-is or further optimise
+* Put the colour profile stuff back in
 * etc
