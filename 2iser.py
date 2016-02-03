@@ -17,18 +17,17 @@ def convert():
         thumb_dir += "/"
     thumb_sizes = data.get("thumbSizes")
 
-    result = {"jobid": job_id}
     # TODO check rest for Noneness
     if source is not None:
-
         # currently no idea how this really went as no return value
-        jp2iser.process(source, destination=destination, bounded_sizes=thumb_sizes, bounded_folder=thumb_dir)
+        result = jp2iser.process(source, destination=destination, bounded_sizes=thumb_sizes, bounded_folder=thumb_dir)
         result["status"] = "Success"
-
     else:
-        result["status"] = "Job failed"
+        result = {"status": "Job failed"}
+
+    result["job_id"] = job_id
 
     return jsonify(result)
 
 if __name__ == '__main__':
-    app.run(threaded=True)
+    app.run(threaded=True, debug=True)

@@ -20,6 +20,7 @@ def path_parts(filepath):
 def process(filepath, destination=None, bounded_sizes=list(), bounded_folder=None):
     # Convert image file into tile-optimised JP2 and optionally additional derivatives
     start = time.clock()
+    result = {}
 
     head, filename, namepart, extension = path_parts(filepath)
     print '%s  -- [%s] - %s.%s' % (head, filename, namepart, extension)
@@ -34,16 +35,20 @@ def process(filepath, destination=None, bounded_sizes=list(), bounded_folder=Non
     else:
         kdu_ready = get_kdu_ready_file(filepath, extension)
         make_jp2_from_image(kdu_ready, jp2path)
+        result["jp2"] = jp2path
         if filepath != kdu_ready:
             # TODO - do this properly
             print 'removing', kdu_ready, 'as it was a temporary file'
             os.remove(kdu_ready)
 
     if len(bounded_sizes) > 0:
-        make_derivatives(jp2path, bounded_sizes, bounded_folder)
+        make_derivatives(result, jp2path, bounded_sizes, bounded_folder)
 
     elapsed = time.clock() - start
     print 'operation time', elapsed
+    result["clockTime"] = int(elapsed * 1000)
+
+    return result
 
 
 def is_tile_optimised_jp2(filepath, extension):
@@ -116,7 +121,7 @@ def make_jp2_from_image(kdu_ready_image, jp2path):
     print 'subprocess returned', res
 
 
-def make_derivatives(jp2path, bound_sizes, bound_folder):
+def make_derivatives(result, jp2path, bound_sizes, bound_folder):
     # bound_sizes should be a list of ints (square confinement)
     # make the first one from kdu_expand, then use Pillow to resize further
     # Note that Pillow's im.thumbnail function is really fast but doesn't
@@ -128,6 +133,8 @@ def make_derivatives(jp2path, bound_sizes, bound_folder):
     # i.e., a machine is processing this off the queue in parallel.
     print 'making derivatives'
     jp2 = Jp2Info.from_jp2_file(jp2path)
+    result["width"] = jp2.width
+    result["height"] = jp2.height
     head, filename, namepart, extension = path_parts(jp2path)
     if bound_folder:
         prefix = bound_folder + namepart
@@ -144,6 +151,14 @@ def make_derivatives(jp2path, bound_sizes, bound_folder):
         jpg = prefix + str(size) + '.jpg'
         print 'saving', jpg
         im.save(jpg, quality=90)
+
+        if "thumbs" not in result:
+            result["thumbs"] = []
+        result["thumbs"].append({
+            "path": jpg,
+            "width": im.width,
+            "height": im.height
+        })
 
 
 def get_reduced_image_from_kdu(jp2, size):
