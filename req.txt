@@ -1,0 +1,5 @@
+curl -i \
+    -H "Accept: application/json" \
+    -H "Content-Type: application/json" \
+    -X POST -d '{"source": "/home/giskard/elle.jpg", "jobid": "123", "thumbSizes" : [1000,400,100], "destination": "/home/giskard/test_out/elle.jp2", "thumbDir": "/home/giskard/test_out" }' \
+    http://localhost:5000/convert

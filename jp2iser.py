@@ -9,22 +9,22 @@ from PIL.ImageFile import Parser
 import string
 import subprocess
 from jp2_info import Jp2Info
-import tempfile
+
 
 def path_parts(filepath):
     head, filename = os.path.split(filepath)
     namepart, extension = os.path.splitext(filename)
-    return (head, filename, namepart, extension.lower()[1:])
+    return head, filename, namepart, extension.lower()[1:]
 
 
-def process(filepath, bound_jpegs=[]):
+def process(filepath, destination=None, bounded_sizes=list(), bounded_folder=None):
     # Convert image file into tile-optimised JP2 and optionally additional derivatives
     start = time.clock()
 
     head, filename, namepart, extension = path_parts(filepath)
     print '%s  -- [%s] - %s.%s' % (head, filename, namepart, extension)
 
-    jp2path = os.path.join(OUTPUT_DIR, namepart + '.jp2')
+    jp2path = destination or os.path.join(OUTPUT_DIR, namepart + '.jp2')
     print 'Converting', filename
     print 'We want to make a JP2 at', jp2path
 
@@ -39,12 +39,11 @@ def process(filepath, bound_jpegs=[]):
             print 'removing', kdu_ready, 'as it was a temporary file'
             os.remove(kdu_ready)
 
-    if len(bound_jpegs) > 0:
-        make_derivatives(jp2path, bound_jpegs)
+    if len(bounded_sizes) > 0:
+        make_derivatives(jp2path, bounded_sizes, bounded_folder)
 
     elapsed = time.clock() - start
     print 'operation time', elapsed
-
 
 
 def is_tile_optimised_jp2(filepath, extension):
@@ -92,7 +91,7 @@ def get_tiff_from_pillow(filepath):
     print 'making tiff using pillow from', filepath
     new_file_path = get_output_file_path(filepath, 'tiff')
     im = Image.open(filepath)
-    im.save(new_file_path) # , compression=None)
+    im.save(new_file_path)  # , compression=None)
     return new_file_path
 
 
@@ -117,7 +116,7 @@ def make_jp2_from_image(kdu_ready_image, jp2path):
     print 'subprocess returned', res
 
 
-def make_derivatives(jp2path, bound_sizes):
+def make_derivatives(jp2path, bound_sizes, bound_folder):
     # bound_sizes should be a list of ints (square confinement)
     # make the first one from kdu_expand, then use Pillow to resize further
     # Note that Pillow's im.thumbnail function is really fast but doesn't
@@ -130,7 +129,10 @@ def make_derivatives(jp2path, bound_sizes):
     print 'making derivatives'
     jp2 = Jp2Info.from_jp2_file(jp2path)
     head, filename, namepart, extension = path_parts(jp2path)
-    prefix = os.path.join(head, namepart)
+    if bound_folder:
+        prefix = bound_folder + namepart
+    else:
+        prefix = os.path.join(head, namepart)
     im = None
     for size in sorted(bound_sizes, reverse=True):
         if im is None:
@@ -160,7 +162,7 @@ def get_reduced_image_from_kdu(jp2, size):
     fifo_fp = os.path.join(TMP_DIR, n + '.bmp')
 
     # kdu command
-    q = '' # '-quiet'
+    q = ''  # '-quiet'
     t = '-num_threads 4'
     i = '-i "%s"' % (jp2.path,)
     o = '-o %s' % (fifo_fp,)
@@ -173,8 +175,7 @@ def get_reduced_image_from_kdu(jp2, size):
     #    resolution is effectively divided by 2 to the power of the number of
     #    discarded levels.
 
-
-    kdu_cmd = ' '.join((KDU_EXPAND,q,i,t,red,o))
+    kdu_cmd = ' '.join((KDU_EXPAND, q, i, t, red, o))
 
     # make the named pipe
     mkfifo_call = '%s %s' % (MKFIFO, fifo_fp)
@@ -191,7 +192,7 @@ def get_reduced_image_from_kdu(jp2, size):
         print 'Calling: %s' % (kdu_cmd,)
         print '########### kdu ###############'
         kdu_expand_proc = subprocess.Popen(kdu_cmd, shell=True, bufsize=-1,
-            stderr=subprocess.PIPE, env=expand_env)
+                                           stderr=subprocess.PIPE, env=expand_env)
 
         f = open(fifo_fp, 'rb')
         print 'Opened %s' % fifo_fp
@@ -203,7 +204,7 @@ def get_reduced_image_from_kdu(jp2, size):
             if not s:
                 break
             p.feed(s)
-        im = p.close() # a PIL.Image
+        im = p.close()  # a PIL.Image
 
         # finish kdu
         kdu_exit = kdu_expand_proc.wait()
@@ -222,7 +223,9 @@ def get_reduced_image_from_kdu(jp2, size):
     finally:
         kdu_exit = kdu_expand_proc.wait()
         if kdu_exit != 0:
-            map(logger.error, map(string.strip, kdu_expand_proc.stderr))
+            # TODO : add logging!
+            # map(logger.error, map(string.strip, kdu_expand_proc.stderr))
+            pass
         os.unlink(fifo_fp)
 
     return im
@@ -241,10 +244,11 @@ def scales_to_reduce_arg(jp2, size):
         arg = str(reduce_arg)
     return arg
 
+
 def confine(w, h, req_w, req_h):
     # reduce longest edge to size
     if w <= req_w and h <= req_h:
-        return (w, h)
+        return w, h
 
     scale = min(req_w / (1.0 * w), req_h / (1.0 * h))
     return tuple(map(lambda d: int(round(d * scale)), [w, h]))
@@ -254,22 +258,20 @@ def get_closest_scale(req_w, req_h, full_w, full_h, scales):
     if req_w > full_w or req_h > full_h:
         return 1
     else:
-        return max([s for s in scales if scale_dim(full_w,s) >= req_w and scale_dim(full_h,s) >= req_h])
+        return max([s for s in scales if scale_dim(full_w, s) >= req_w and scale_dim(full_h, s) >= req_h])
 
 
 def scale_dim(dim, scale):
-    return int(ceil(dim/float(scale)))
+    return int(ceil(dim / float(scale)))
 
 
-
-
-def rasterise_pdf(pdfFile):
+def rasterise_pdf(pdf_file):
     print('not yet implemented. Will use Ghostscript and Pillow to create a tiff.')
     raise ValueError('no PDFs just yet')
-
 
 
 if __name__ == "__main__":
     print('------------------------')
     import sys
+
     process(sys.argv[1], map(int, sys.argv[2:]))

@@ -3,8 +3,8 @@ KDU_COMPRESS = '/usr/local/bin/kakadu/kdu_compress'
 KDU_EXPAND = '/usr/local/bin/kakadu/kdu_expand'
 
 
-OUTPUT_DIR = '/home/tom/jp2iser/out/'
-TMP_DIR = '/home/tom/jp2iser/tmp/'
+OUTPUT_DIR = '/home/giskard/dev/jp2iser/out/'
+TMP_DIR = '/home/giskard/dev/jp2iser/tmp/'
 
 KDU_LIB = '/usr/local/bin/kakadu'
 MKFIFO = '/usr/bin/mkfifo'
