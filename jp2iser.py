@@ -9,7 +9,7 @@ from PIL.ImageFile import Parser
 import string
 import subprocess
 from jp2_info import Jp2Info
-
+import uuid
 
 def path_parts(filepath):
     head, filename = os.path.split(filepath)
@@ -25,9 +25,10 @@ def process(filepath, destination=None, bounded_sizes=list(), bounded_folder=Non
     head, filename, namepart, extension = path_parts(filepath)
     print '%s  -- [%s] - %s.%s' % (head, filename, namepart, extension)
 
+    print 'destination: %s' % destination
     jp2path = destination or os.path.join(OUTPUT_DIR, namepart + '.jp2')
-    print 'Converting', filename
-    print 'We want to make a JP2 at', jp2path
+    print 'Converting: ', filename
+    print 'We want to make a JP2 at: ', jp2path
 
     if is_tile_optimised_jp2(filepath, extension):
         print filename, 'is already optimised for tiles, proceeding to next stage'
@@ -82,7 +83,8 @@ def get_kdu_ready_file(filepath, extension):
 def get_output_file_path(filepath, new_extension):
     # use tmp directory, not like this!
     head, filename, namepart, extension = path_parts(filepath)
-    return os.path.join(OUTPUT_DIR, namepart + '.' + new_extension)
+    myid = str(uuid.uuid4())
+    return os.path.join(TMP_DIR, myid + '.' + namepart + '.' + new_extension)
 
 
 def mock_file(filepath, new_extension):
