@@ -230,6 +230,9 @@ def get_reduced_image_from_kdu(jp2, size):
             for e in kdu_expand_proc.stderr:
                 print e
 
+        if im.mode != "RGB":
+            im = im.convert("RGB")
+
         imw, imh = im.size
         print 'we now have a PIL image %s x %s' % (imw, imh)
         if imw != req_w or imh != req_h:
