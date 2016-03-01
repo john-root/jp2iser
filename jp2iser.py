@@ -150,7 +150,7 @@ def make_derivatives(result, jp2path, bound_sizes, bound_folder):
             req_w, req_h = confine(jp2.width, jp2.height, size, size)
             im = im.resize((req_w, req_h), resample=Image.ANTIALIAS)
 
-        jpg = prefix + str(size) + '.jpg'
+        jpg = prefix + '_' + str(size) + '.jpg'
         print 'saving', jpg
         im.save(jpg, quality=90)
 
