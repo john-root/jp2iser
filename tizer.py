@@ -9,7 +9,7 @@ app.config.from_object(__name__)
 def convert():
 
     data = request.get_json()
-    job_id = data.get("jobid")
+    job_id = data.get("jobId")
     source = data.get("source")
     destination = data.get("destination")
     thumb_dir = data.get("thumbDir")
@@ -22,10 +22,11 @@ def convert():
         # currently no idea how this really went as no return value
         result = jp2iser.process(source, destination=destination, bounded_sizes=thumb_sizes, bounded_folder=thumb_dir)
         result["status"] = "Success"
+	result["source"] = source
     else:
         result = {"status": "Job failed"}
 
-    result["job_id"] = job_id
+    result["jobId"] = job_id
 
     return jsonify(result)
 
