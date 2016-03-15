@@ -10,7 +10,7 @@ KDU_LIB = '/usr/local/bin/kakadu'
 MKFIFO = '/usr/bin/mkfifo'
 
 # note the double escape of braces for formatting
-CMD_COMPRESS = ('{kdu} -i {input} -o {output} Clevels=7 "Cblk={{64,64}}" "Cuse_sop=yes" '
+CMD_COMPRESS = ('{kdu} -i {input} -o {output} Clevels=7 "Cblk={{64,64}}" "Cuse_sop=yes" -jp2_space sRGB  '
                 '"ORGgen_plt=yes" "ORGtparts=R" "Corder=RPCL" -rate 0.5 '
                 '"Cprecincts={{256,256}},{{256,256}},{{256,256}},{{128,128}},{{128,128}},{{64,64}},{{64,64}},{{32,32}},{{16,16}}"')
 
