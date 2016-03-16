@@ -17,7 +17,7 @@ def path_parts(filepath):
     return head, filename, namepart, extension.lower()[1:]
 
 
-def process(filepath, destination=None, bounded_sizes=list(), bounded_folder=None):
+def process(filepath, destination=None, bounded_sizes=list(), bounded_folder=None, optimisation="med"):
     # Convert image file into tile-optimised JP2 and optionally additional derivatives
     start = time.clock()
     result = {}
@@ -35,7 +35,7 @@ def process(filepath, destination=None, bounded_sizes=list(), bounded_folder=Non
         shutil.copyfile(filepath, jp2path)
     else:
         kdu_ready = get_kdu_ready_file(filepath, extension)
-        make_jp2_from_image(kdu_ready, jp2path)
+        make_jp2_from_image(kdu_ready, jp2path, optimisation)
         result["jp2"] = jp2path
         if filepath != kdu_ready:
             # TODO - do this properly
@@ -48,6 +48,7 @@ def process(filepath, destination=None, bounded_sizes=list(), bounded_folder=Non
     elapsed = time.clock() - start
     print 'operation time', elapsed
     result["clockTime"] = int(elapsed * 1000)
+    result["optimisation"] = optimisation
 
     return result
 
@@ -111,13 +112,17 @@ def get_tiff_from_kdu(filepath):
     return mock_file(filepath, 'tiff')
 
 
-def make_jp2_from_image(kdu_ready_image, jp2path):
+def make_jp2_from_image(kdu_ready_image, jp2path, optimisation):
     print 'making jp2 using kdu from', kdu_ready_image
     compress_env = {
         'LD_LIBRARY_PATH': KDU_LIB,
         'PATH': KDU_COMPRESS
     }
-    cmd = CMD_COMPRESS.format(kdu=KDU_COMPRESS, input=kdu_ready_image, output=jp2path)
+    if optimisation in CMD_COMPRESS:
+        compress_cmd = CMD_COMPRESS[optimisation]
+    else:
+        compress_cmd = CMD_COMPRESS["kdu_med"]
+    cmd = compress_cmd.format(kdu=KDU_COMPRESS, input=kdu_ready_image, output=jp2path)
     print cmd
     res = subprocess.check_call(cmd, shell=True, env=compress_env)
     print 'subprocess returned', res

@@ -13,6 +13,7 @@ def convert():
     source = data.get("source")
     destination = data.get("destination")
     thumb_dir = data.get("thumbDir")
+    optimisation = data.get("optimisation")
     if thumb_dir and thumb_dir[-1] != "/":
         thumb_dir += "/"
     thumb_sizes = data.get("thumbSizes")
@@ -20,9 +21,10 @@ def convert():
     # TODO check rest for Noneness
     if source is not None:
         # currently no idea how this really went as no return value
-        result = jp2iser.process(source, destination=destination, bounded_sizes=thumb_sizes, bounded_folder=thumb_dir)
+        result = jp2iser.process(source, destination=destination, bounded_sizes=thumb_sizes, bounded_folder=thumb_dir,
+                                 optimisation=optimisation)
         result["status"] = "Success"
-	result["source"] = source
+        result["source"] = source
     else:
         result = {"status": "Job failed"}
 
