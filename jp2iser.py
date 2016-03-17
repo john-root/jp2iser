@@ -6,10 +6,13 @@ import random
 from settings import *
 from PIL import Image
 from PIL.ImageFile import Parser
+from PIL.ImageCms import profileToProfile
+import cStringIO
 import string
 import subprocess
 from jp2_info import Jp2Info
 import uuid
+
 
 def path_parts(filepath):
     head, filename = os.path.split(filepath)
@@ -99,6 +102,10 @@ def get_tiff_from_pillow(filepath):
     print 'making tiff using pillow from', filepath
     new_file_path = get_output_file_path(filepath, 'tiff')
     im = Image.open(filepath)
+    if 'icc_profile' in im.info:
+        print "converting profile"
+        src_profile = cStringIO.StringIO(im.info['icc_profile'])
+        im = profileToProfile(im, src_profile, srgb_profile_fp)
     im.save(new_file_path)  # , compression=None)
     return new_file_path
 
