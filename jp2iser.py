@@ -17,7 +17,7 @@ def path_parts(filepath):
     return head, filename, namepart, extension.lower()[1:]
 
 
-def process(filepath, destination=None, bounded_sizes=list(), bounded_folder=None, optimisation="med"):
+def process(filepath, destination=None, bounded_sizes=list(), bounded_folder=None, optimisation="kdu_med"):
     # Convert image file into tile-optimised JP2 and optionally additional derivatives
     start = time.clock()
     result = {}
