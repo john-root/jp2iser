@@ -14,6 +14,7 @@ def convert():
     destination = data.get("destination")
     thumb_dir = data.get("thumbDir")
     optimisation = data.get("optimisation")
+    image_id = data.get("imageId")
     if thumb_dir and thumb_dir[-1] != "/":
         thumb_dir += "/"
     thumb_sizes = data.get("thumbSizes")
@@ -22,7 +23,7 @@ def convert():
     if source is not None:
         # currently no idea how this really went as no return value
         result = jp2iser.process(source, destination=destination, bounded_sizes=thumb_sizes, bounded_folder=thumb_dir,
-                                 optimisation=optimisation)
+                                 optimisation=optimisation,jpeg_info_id=image_id)
         result["status"] = "Success"
         result["source"] = source
     else:
