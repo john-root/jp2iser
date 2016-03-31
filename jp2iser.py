@@ -1,6 +1,7 @@
 import time
 import os
 import shutil
+import base64
 from math import ceil, log
 import random
 from settings import *
@@ -12,6 +13,8 @@ import string
 import subprocess
 from jp2_info import Jp2Info
 import uuid
+import pystache
+import json
 
 
 def path_parts(filepath):
@@ -20,7 +23,7 @@ def path_parts(filepath):
     return head, filename, namepart, extension.lower()[1:]
 
 
-def process(filepath, destination=None, bounded_sizes=list(), bounded_folder=None, optimisation="kdu_med"):
+def process(filepath, destination=None, bounded_sizes=list(), bounded_folder=None, optimisation="kdu_med", jpeg_info_id="ID"):
     # Convert image file into tile-optimised JP2 and optionally additional derivatives
     start = time.clock()
     result = {}
@@ -45,13 +48,24 @@ def process(filepath, destination=None, bounded_sizes=list(), bounded_folder=Non
             print 'removing', kdu_ready, 'as it was a temporary file'
             os.remove(kdu_ready)
 
+    jp2_data = Jp2Info.from_jp2_file(jp2path)
+    jp2_info_template = open('jp2info.mustache').read()
+
+    jp2_info = pystache.render(jp2_info_template, {
+        "id": jpeg_info_id,
+        "height": jp2_data.height,
+        "width": jp2_data.width,
+        "tiles": json.dumps(filter(lambda t: t["width"] == 256, jp2_data.tiles))
+    })
+
     if len(bounded_sizes) > 0:
-        make_derivatives(result, jp2path, bounded_sizes, bounded_folder)
+        make_derivatives(jp2_data, result, jp2path, bounded_sizes, bounded_folder)
 
     elapsed = time.clock() - start
     print 'operation time', elapsed
     result["clockTime"] = int(elapsed * 1000)
     result["optimisation"] = optimisation
+    result["jp2Info"] = base64.b64encode(jp2_info.encode('utf-8'))
 
     return result
 
@@ -135,7 +149,7 @@ def make_jp2_from_image(kdu_ready_image, jp2path, optimisation):
     print 'subprocess returned', res
 
 
-def make_derivatives(result, jp2path, bound_sizes, bound_folder):
+def make_derivatives(jp2, result, jp2path, bound_sizes, bound_folder):
     # bound_sizes should be a list of ints (square confinement)
     # make the first one from kdu_expand, then use Pillow to resize further
     # Note that Pillow's im.thumbnail function is really fast but doesn't
@@ -146,7 +160,6 @@ def make_derivatives(result, jp2path, bound_sizes, bound_folder):
     # to be running on multiple threads and control it that way
     # i.e., a machine is processing this off the queue in parallel.
     print 'making derivatives'
-    jp2 = Jp2Info.from_jp2_file(jp2path)
     result["width"] = jp2.width
     result["height"] = jp2.height
     head, filename, namepart, extension = path_parts(jp2path)
