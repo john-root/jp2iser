@@ -36,6 +36,9 @@ def process(filepath, destination=None, bounded_sizes=list(), bounded_folder=Non
     print 'Converting: ', filename
     print 'We want to make a JP2 at: ', jp2path
 
+    if optimisation not in CMD_COMPRESS:
+        optimisation = "kdu_med"
+
     if is_tile_optimised_jp2(filepath, extension):
         print filename, 'is already optimised for tiles, proceeding to next stage'
         shutil.copyfile(filepath, jp2path)
@@ -55,7 +58,7 @@ def process(filepath, destination=None, bounded_sizes=list(), bounded_folder=Non
         "id": jpeg_info_id,
         "height": jp2_data.height,
         "width": jp2_data.width,
-        "tiles": json.dumps(filter(lambda t: t["width"] == 256, jp2_data.tiles))
+        "scale_factors": ",".join(map(str, get_scale_factors(jp2_data.width, jp2_data.height)))
     })
 
     if len(bounded_sizes) > 0:
@@ -66,7 +69,8 @@ def process(filepath, destination=None, bounded_sizes=list(), bounded_folder=Non
     result["clockTime"] = int(elapsed * 1000)
     result["optimisation"] = optimisation
     result["jp2Info"] = base64.b64encode(jp2_info.encode('utf-8'))
-
+    result["width"] = jp2_data.width
+    result["height"] = jp2_data.height
     return result
 
 
@@ -139,10 +143,7 @@ def make_jp2_from_image(kdu_ready_image, jp2path, optimisation):
         'LD_LIBRARY_PATH': KDU_LIB,
         'PATH': KDU_COMPRESS
     }
-    if optimisation in CMD_COMPRESS:
-        compress_cmd = CMD_COMPRESS[optimisation]
-    else:
-        compress_cmd = CMD_COMPRESS["kdu_med"]
+    compress_cmd = CMD_COMPRESS[optimisation]
     cmd = compress_cmd.format(kdu=KDU_COMPRESS, input=kdu_ready_image, output=jp2path)
     print cmd
     res = subprocess.check_call(cmd, shell=True, env=compress_env)
@@ -160,8 +161,6 @@ def make_derivatives(jp2, result, jp2path, bound_sizes, bound_folder):
     # to be running on multiple threads and control it that way
     # i.e., a machine is processing this off the queue in parallel.
     print 'making derivatives'
-    result["width"] = jp2.width
-    result["height"] = jp2.height
     head, filename, namepart, extension = path_parts(jp2path)
     if bound_folder:
         prefix = bound_folder + namepart
@@ -274,6 +273,18 @@ def get_reduced_image_from_kdu(jp2, size):
         os.unlink(fifo_fp)
 
     return im
+
+
+def get_scale_factors(width, height):
+
+    tile_size = 256
+    dimension = max(width, height)
+    factors = [1]
+
+    while dimension > tile_size:
+        dimension //= 2
+        factors.append(factors[-1] * 2)
+    return factors
 
 
 def scales_to_reduce_arg(jp2, size):
