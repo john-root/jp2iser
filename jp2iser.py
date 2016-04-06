@@ -43,8 +43,8 @@ def process(filepath, destination=None, bounded_sizes=list(), bounded_folder=Non
         print filename, 'is already optimised for tiles, proceeding to next stage'
         shutil.copyfile(filepath, jp2path)
     else:
-        kdu_ready = get_kdu_ready_file(filepath, extension)
-        make_jp2_from_image(kdu_ready, jp2path, optimisation)
+        kdu_ready, image_mode = get_kdu_ready_file(filepath, extension)
+        make_jp2_from_image(kdu_ready, jp2path, optimisation, image_mode)
         result["jp2"] = jp2path
         if filepath != kdu_ready:
             # TODO - do this properly
@@ -87,6 +87,10 @@ def get_kdu_ready_file(filepath, extension):
     #  determined by the file suffix.'
     kdu_ready_formats = ['tif', 'bmp', 'raw', 'pbm', 'pgm', 'ppm']
 
+    # during this processing we might be able to determine the mode. If not, leave as
+    # none and we will do it later if reqired
+    image_mode = None
+
     # we need to create a tiff for initial passing to kdu
 
     if extension[:3] in kdu_ready_formats:
@@ -97,9 +101,9 @@ def get_kdu_ready_file(filepath, extension):
         print filepath, 'is not tile ready so needs to be reprocessed'
         filepath = get_tiff_from_kdu(filepath)
     else:
-        filepath = get_tiff_from_pillow(filepath)
+        filepath, image_mode = get_tiff_from_pillow(filepath)
 
-    return filepath
+    return filepath, image_mode
 
 
 def get_output_file_path(filepath, new_extension):
@@ -125,7 +129,9 @@ def get_tiff_from_pillow(filepath):
         src_profile = cStringIO.StringIO(im.info['icc_profile'])
         im = profileToProfile(im, src_profile, srgb_profile_fp)
     im.save(new_file_path)  # , compression=None)
-    return new_file_path
+
+    image_mode = im.mode
+    return new_file_path, image_mode
 
 
 def get_tiff_from_kdu(filepath):
@@ -137,14 +143,23 @@ def get_tiff_from_kdu(filepath):
     return mock_file(filepath, 'tiff')
 
 
-def make_jp2_from_image(kdu_ready_image, jp2path, optimisation):
+def make_jp2_from_image(kdu_ready_image, jp2path, optimisation, image_mode=None):
     print 'making jp2 using kdu from', kdu_ready_image
     compress_env = {
         'LD_LIBRARY_PATH': KDU_LIB,
         'PATH': KDU_COMPRESS
     }
     compress_cmd = CMD_COMPRESS[optimisation]
-    cmd = compress_cmd.format(kdu=KDU_COMPRESS, input=kdu_ready_image, output=jp2path)
+
+    if image_mode is None:
+        im = Image.open(kdu_ready_image)
+        image_mode = im.mode
+
+    # srgb or no_palette
+    image_mode_replacement = IMAGE_MODES[image_mode]
+
+    cmd = compress_cmd.format(kdu=KDU_COMPRESS, input=kdu_ready_image, output=jp2path,
+                              image_mode=image_mode_replacement)
     print cmd
     res = subprocess.check_call(cmd, shell=True, env=compress_env)
     print 'subprocess returned', res
