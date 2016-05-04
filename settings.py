@@ -1,11 +1,12 @@
-KDU_COMPRESS = '/usr/bin/kdu_compress'
+KDU_COMPRESS = '/usr/binkdu_compress'
 KDU_EXPAND = '/usr/bin/kdu_expand'
 
-OUTPUT_DIR = '/Users/Giskard/dev/jp2iser/test_out/'
-TMP_DIR = '/Users/Giskard/dev/jp2iser/tmp/'
+OUTPUT_DIR = '/Users/Giskard/tizerstuff/'
+TMP_DIR = '/Users/Giskard/tizerstuff/'
 
-KDU_LIB = '/usr/bin/kakadu'
+KDU_LIB = '/usr/local/bin/kakadu'
 MKFIFO = '/usr/bin/mkfifo'
+
 
 IMAGE_MODES = {
     "L": "-no_palette",        # greyscale

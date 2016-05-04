@@ -88,7 +88,7 @@ def get_kdu_ready_file(filepath, extension):
     kdu_ready_formats = ['tif', 'bmp', 'raw', 'pbm', 'pgm', 'ppm']
 
     # during this processing we might be able to determine the mode. If not, leave as
-    # none and we will do it later if reqired
+    # none and we will do it later if required
     image_mode = None
 
     # we need to create a tiff for initial passing to kdu
