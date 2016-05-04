@@ -1,10 +1,10 @@
-KDU_COMPRESS = '/usr/local/bin/kakadu/kdu_compress'
-KDU_EXPAND = '/usr/local/bin/kakadu/kdu_expand'
+KDU_COMPRESS = '/usr/bin/kdu_compress'
+KDU_EXPAND = '/usr/bin/kdu_expand'
 
-OUTPUT_DIR = '/home/ubuntu/out/'
-TMP_DIR = '/home/ubuntu/jp2iser/tmp/'
+OUTPUT_DIR = '/Users/Giskard/dev/jp2iser/test_out/'
+TMP_DIR = '/Users/Giskard/dev/jp2iser/tmp/'
 
-KDU_LIB = '/usr/local/bin/kakadu'
+KDU_LIB = '/usr/bin/kakadu'
 MKFIFO = '/usr/bin/mkfifo'
 
 IMAGE_MODES = {
@@ -35,4 +35,4 @@ CMD_COMPRESS = {
 }
 
 map_profile_to_srgb = True
-srgb_profile_fp = '/usr/share/color/icc/colord/sRGB.icc'
+srgb_profile_fp = '/Users/Giskard/dev/jp2iser/sRGB.icc'

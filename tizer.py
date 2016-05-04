@@ -1,7 +1,8 @@
 import jp2iser
 from flask import Flask, request, jsonify
 
-app = Flask(__name__)
+application = Flask(__name__)
+app = application
 app.config.from_object(__name__)
 
 

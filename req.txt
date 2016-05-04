@@ -1,5 +1,4 @@
 curl -i \
     -H "Accept: application/json" \
     -H "Content-Type: application/json" \
-    -X POST -d '{"source": "/home/ubuntu/jp2iser/i/elle.jpg", "jobid": "123", "thumbSizes" : [1000,400,100], "destination": "/home/ubuntu/jp2iser/i/test_out/elle.jp2", "thumbDir": "/home/ubuntu/jp2iser/i/test_out" }' \
-    http://tizer.eu-west-1.dlcs/convert
+    -X POST -d '{"source": "/Users/Giskard/dev/rogues-gallery/photo-and-line-colourspace/elife-00007-fig5-v1-1084w.jpg", "jobid": "123", "thumbSizes" : [1000,400,100], "destination": "/Users/Giskard/dev/jp2iser/test_out/elife-00007-fig5-v1-1084w.jp2", "thumbDir": "/Users/Giskard/dev/jp2iser/test_out" }' http://localhost:5000/convert
