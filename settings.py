@@ -1,4 +1,4 @@
-KDU_COMPRESS = '/usr/binkdu_compress'
+KDU_COMPRESS = '/usr/bin/kdu_compress'
 KDU_EXPAND = '/usr/bin/kdu_expand'
 
 OUTPUT_DIR = '/Users/Giskard/tizerstuff/'

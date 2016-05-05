@@ -19,6 +19,7 @@ def convert():
     if thumb_dir and thumb_dir[-1] != "/":
         thumb_dir += "/"
     thumb_sizes = data.get("thumbSizes")
+    origin = data.get("origin")
 
     # TODO check rest for Noneness
     if source is not None:
@@ -31,6 +32,7 @@ def convert():
         result = {"status": "Job failed"}
 
     result["jobId"] = job_id
+    result["origin"] = origin
 
     return jsonify(result)
 

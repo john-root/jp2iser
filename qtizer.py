@@ -4,6 +4,8 @@ from boto import sqs
 from boto.sqs.message import Message
 import json
 import requests
+import pytz
+import datetime
 
 output_queue = None
 
@@ -32,9 +34,8 @@ def process_message(message):
 
         call_tizer(message_payload)
 
-    except Exception:
-        # TODO : log
-        pass
+    except Exception as e:
+        print e
 
     message.delete()
 
@@ -43,17 +44,26 @@ def call_tizer(payload):
 
     r = requests.post(settings.TIZER_SERVICE, json=payload)
     if r.status_code == 200:
-        pass
-    pass
+        message = {
+            '_type': 'event',
+            '_created': str(datetime.datetime.now(pytz.timezone('UTC'))),
+            'message': 'event::image-ingest-tizer-output',
+            'params': r.json(),
+
+        }
+        send_message(json.dumps(message))
+    # TODO : log
 
 
 def send_message(payload):
+
     msg = Message()
     msg.set_body(payload)
     output_queue.write(msg)
 
 
 def convert_message_format(message_payload):
+
     if 'params' in message_payload:
         message_payload = message_payload['params']
         if 'thumbSizes' in message_payload:
@@ -81,3 +91,6 @@ def get_output_queue():
 
 if __name__ == "__main__":
     main()
+
+
+
