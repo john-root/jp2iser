@@ -1,10 +1,10 @@
-KDU_COMPRESS = '/usr/bin/kdu_compress'
-KDU_EXPAND = '/usr/bin/kdu_expand'
+KDU_COMPRESS = '/opt/tizer/kakadu/current/kdu_compress'
+KDU_EXPAND = '/opt/tizer/kakadu/current/kdu_expand'
 
-OUTPUT_DIR = '/Users/Giskard/tizerstuff/'
-TMP_DIR = '/Users/Giskard/tizerstuff/'
+OUTPUT_DIR = '/opt/tizer/out/'
+TMP_DIR = '/opt/tizer/tmp/'
 
-KDU_LIB = '/usr/local/bin/kakadu'
+KDU_LIB = '/opt/tizer/kakadu/current/'
 MKFIFO = '/usr/bin/mkfifo'
 
 
@@ -36,4 +36,4 @@ CMD_COMPRESS = {
 }
 
 map_profile_to_srgb = True
-srgb_profile_fp = '/Users/Giskard/dev/jp2iser/sRGB.icc'
+srgb_profile_fp = '/opt/tizer/sRGB.icc'
