@@ -36,4 +36,4 @@ CMD_COMPRESS = {
 }
 
 map_profile_to_srgb = True
-srgb_profile_fp = '/opt/tizer/sRGB.icc'
+srgb_profile_fp = '/opt/tizer/icc/sRGB.icc'
