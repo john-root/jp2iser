@@ -1,6 +1,10 @@
 import jp2iser
 from flask import Flask, request, jsonify
+import logging
+import sys
 
+
+logging.basicConfig(stream=sys.stderr)
 application = Flask(__name__)
 app = application
 app.config.from_object(__name__)
@@ -10,7 +14,8 @@ app.config.from_object(__name__)
 def convert():
 
     data = request.get_json()
-    job_id = data.get("jobId")
+    job_id =\
+        data.get("jobId")
     source = data.get("source")
     destination = data.get("destination")
     thumb_dir = data.get("thumbDir")

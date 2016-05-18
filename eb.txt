@@ -1,0 +1,5 @@
+curl -i \
+    -H "Accept: application/json" \
+    -H "Content-Type: application/json" \
+    -X POST -d '{"source": "/opt/tizer/samples/flower.jpg", "jobid": "123", "thumbSizes" : [1000,400,100], "destination": "/opt/tizer/out/flower.jp2", "thumbDir": "/opt/tizer/out/" }' \
+    http://52.50.40.77/convert
