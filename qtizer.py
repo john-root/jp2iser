@@ -1,7 +1,7 @@
 from multiprocessing import Pool
 import qtizer_settings as settings
 from boto import sqs
-from boto.sqs.message import Message
+from boto.sqs.message import RawMessage
 import json
 import requests
 import pytz
@@ -69,7 +69,7 @@ def call_tizer(payload):
 
 def send_message(payload):
 
-    msg = Message()
+    msg = RawMessage()
     msg.set_body(payload)
     output_queue.write(msg)
 
