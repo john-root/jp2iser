@@ -6,21 +6,32 @@ import json
 import requests
 import pytz
 import datetime
+import logging
+import base64
 
 output_queue = None
+logger = None
 
 
 def main():
     input_queue = get_input_queue()
 
+    logging.basicConfig(
+                        filename=settings.log_file,
+                        level=getattr(logging, settings.log_level))
+
+
     # TODO : check queues not None
 
     pool = Pool(5, initializer=init_pool, initargs=())
 
-    while True:
-        messages = input_queue.get_messages(num_messages=10, visibility_timeout=120, wait_time_seconds=20)
-        if len(messages) > 0:
-            pool.map(process_message, messages)
+    try:
+        while True:
+            messages = input_queue.get_messages(num_messages=10, visibility_timeout=120, wait_time_seconds=20)
+            if len(messages) > 0:
+                pool.map(process_message, messages)
+    except:
+        logging.exception("Error getting messages")
 
 
 def process_message(message):
@@ -30,7 +41,7 @@ def process_message(message):
         # payload may be encoded in standard message format
         if '_type' in message_payload and 'message' in message_payload \
                 and message_payload['message'] == "event::call-tizer":
-            message_payload = convert_message_format(message_payload)
+            message_payload = convert_input_message_format(message_payload)
 
         call_tizer(message_payload)
 
@@ -62,7 +73,7 @@ def send_message(payload):
     output_queue.write(msg)
 
 
-def convert_message_format(message_payload):
+def convert_input_message_format(message_payload):
 
     if 'params' in message_payload:
         message_payload = message_payload['params']
@@ -70,6 +81,16 @@ def convert_message_format(message_payload):
             message_payload['thumbSizes'] = map(int, message_payload['thumbSizes'][1: -1].split(','))
             return message_payload
     return None
+
+
+def convert_output_message_format(message_payload):
+
+    if 'thumbs' in message_payload:
+        thumbs = message_payload['thumbs']
+        string_thumbs = json.dumps(thumbs)
+        encoded_thumbs = base64.b64encode(string_thumbs.encode('utf-8'))
+        message_payload['thumbs'] = encoded_thumbs
+    return message_payload
 
 
 def init_pool():
