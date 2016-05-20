@@ -62,6 +62,7 @@ def call_tizer(payload):
             'params': r.json(),
 
         }
+        message = convert_output_message_format(message)
         send_message(json.dumps(message))
     # TODO : log
 
