@@ -85,11 +85,11 @@ def convert_input_message_format(message_payload):
 
 def convert_output_message_format(message_payload):
 
-    if 'thumbs' in message_payload:
-        thumbs = message_payload['thumbs']
+    if 'params' in message_payload and 'thumbs' in message_payload['params']:
+        thumbs = message_payload['params']['thumbs']
         string_thumbs = json.dumps(thumbs)
         encoded_thumbs = base64.b64encode(string_thumbs.encode('utf-8'))
-        message_payload['thumbs'] = encoded_thumbs
+        message_payload['params']['thumbs'] = encoded_thumbs
     return message_payload
 
 
