@@ -86,11 +86,16 @@ def convert_input_message_format(message_payload):
 
 def convert_output_message_format(message_payload):
 
-    if 'params' in message_payload and 'thumbs' in message_payload['params']:
-        thumbs = message_payload['params']['thumbs']
-        string_thumbs = json.dumps(thumbs)
-        encoded_thumbs = base64.b64encode(string_thumbs.encode('utf-8'))
-        message_payload['params']['thumbs'] = encoded_thumbs
+    if 'params' in message_payload:
+        for param in message_payload['params']:
+            if param == 'thumbs':
+                thumbs = message_payload['params']['thumbs']
+                string_thumbs = json.dumps(thumbs)
+                encoded_thumbs = base64.b64encode(string_thumbs.encode('utf-8'))
+                message_payload['params']['thumbs'] = encoded_thumbs
+            else:
+                if not isinstance(message_payload['params'][param], str):
+                    message_payload['params'][param] = str(message_payload['params'][param])
     return message_payload
 
 

@@ -31,10 +31,10 @@ def convert():
         # currently no idea how this really went as no return value
         result = jp2iser.process(source, destination=destination, bounded_sizes=thumb_sizes, bounded_folder=thumb_dir,
                                  optimisation=optimisation,jpeg_info_id=image_id)
-        result["status"] = "Success"
+        result["status"] = "success"
         result["source"] = source
     else:
-        result = {"status": "Job failed"}
+        result = {"status": "job failed"}
 
     result["jobId"] = job_id
     result["origin"] = origin
