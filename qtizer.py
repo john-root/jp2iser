@@ -29,7 +29,7 @@ def process_message(message):
 
         # payload may be encoded in standard message format
         if '_type' in message_payload and 'message' in message_payload \
-                and message_payload['message'] == "event::image-ingest-more":
+                and message_payload['message'] == "event::call-tizer":
             message_payload = convert_message_format(message_payload)
 
         call_tizer(message_payload)
@@ -47,7 +47,7 @@ def call_tizer(payload):
         message = {
             '_type': 'event',
             '_created': str(datetime.datetime.now(pytz.timezone('UTC'))),
-            'message': 'event::image-ingest-tizer-output',
+            'message': 'event::tizer-output',
             'params': r.json(),
 
         }
