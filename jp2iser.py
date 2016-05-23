@@ -23,7 +23,7 @@ def path_parts(filepath):
     return head, filename, namepart, extension.lower()[1:]
 
 
-def process(filepath, destination=None, bounded_sizes=list(), bounded_folder=None, optimisation="kdu_med", jpeg_info_id="ID"):
+def process(filepath, destination=None, bounded_sizes=list(), bounded_folder=None, optimisation="kdu_med", jpeg_info_id="ID", base_uri=""):
     # Convert image file into tile-optimised JP2 and optionally additional derivatives
     start = time.clock()
     result = {}
@@ -57,6 +57,7 @@ def process(filepath, destination=None, bounded_sizes=list(), bounded_folder=Non
     jp2_info_template = open('jp2info.mustache').read()
 
     jp2_info = pystache.render(jp2_info_template, {
+        "base_uri": base_uri,
         "id": jpeg_info_id,
         "height": jp2_data.height,
         "width": jp2_data.width,
