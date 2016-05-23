@@ -16,9 +16,9 @@ logger = None
 def main():
     input_queue = get_input_queue()
 
-    logging.basicConfig(
-                        filename=settings.log_file,
-                        level=getattr(logging, settings.log_level))
+    #logging.basicConfig(
+    #                    filename=settings.log_file,
+    #                    level=getattr(logging, settings.log_level))
 
 
     # TODO : check queues not None
@@ -31,7 +31,8 @@ def main():
             if len(messages) > 0:
                 pool.map(process_message, messages)
     except:
-        logging.exception("Error getting messages")
+        #logging.exception("Error getting messages")
+        print "Error getting messages"
 
 
 def process_message(message):
