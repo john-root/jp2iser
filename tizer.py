@@ -38,6 +38,7 @@ def convert():
 
     result["jobId"] = job_id
     result["origin"] = origin
+    result["imageId"] = image_id
 
     return jsonify(result)
 
