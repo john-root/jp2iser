@@ -21,6 +21,7 @@ def convert():
     thumb_dir = data.get("thumbDir")
     optimisation = data.get("optimisation")
     image_id = data.get("imageId")
+    base_uri = data.get("baseUri")
     if thumb_dir and thumb_dir[-1] != "/":
         thumb_dir += "/"
     thumb_sizes = data.get("thumbSizes")
