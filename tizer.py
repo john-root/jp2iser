@@ -31,7 +31,7 @@ def convert():
     if source is not None:
         # currently no idea how this really went as no return value
         result = jp2iser.process(source, destination=destination, bounded_sizes=thumb_sizes, bounded_folder=thumb_dir,
-                                 optimisation=optimisation,jpeg_info_id=image_id)
+                                 optimisation=optimisation,jpeg_info_id=image_id,base_uri=base_uri)
         result["status"] = "success"
         result["source"] = source
     else:
