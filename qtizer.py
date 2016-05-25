@@ -8,6 +8,7 @@ import pytz
 import datetime
 import logging
 import base64
+import os.path
 
 output_queue = None
 logger = None
@@ -27,6 +28,8 @@ def main():
 
     try:
         while True:
+            if os.path.exists('/tmp/stop.txt'):
+                sys.exit();
             messages = input_queue.get_messages(num_messages=10, visibility_timeout=120, wait_time_seconds=20)
             if len(messages) > 0:
                 pool.map(process_message, messages)
