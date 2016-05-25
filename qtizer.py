@@ -80,7 +80,7 @@ def convert_input_message_format(message_payload):
     if 'params' in message_payload:
         message_payload = message_payload['params']
         if 'thumbSizes' in message_payload:
-            message_payload['thumbSizes'] = map(int, message_payload['thumbSizes'][1: -1].split(','))
+            message_payload['thumbSizes'] = map(int, message_payload['thumbSizes'].split(','))
             return message_payload
     return None
 
