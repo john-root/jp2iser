@@ -9,6 +9,7 @@ import datetime
 import logging
 import base64
 import os.path
+import sys
 
 output_queue = None
 logger = None
@@ -24,13 +25,16 @@ def main():
 
     # TODO : check queues not None
 
-    pool = Pool(5, initializer=init_pool, initargs=())
+    num_pool_workers = settings.NUM_POOL_WORKERS
+    messages_per_fetch = settings.MESSAGES_PER_FETCH
+
+    pool = Pool(num_pool_workers, initializer=init_pool, initargs=())
 
     try:
         while True:
             if os.path.exists('/tmp/stop.txt'):
-                sys.exit();
-            messages = input_queue.get_messages(num_messages=10, visibility_timeout=120, wait_time_seconds=20)
+                sys.exit()
+            messages = input_queue.get_messages(num_messages=messages_per_fetch, visibility_timeout=120, wait_time_seconds=20)
             if len(messages) > 0:
                 pool.map(process_message, messages)
     except:

@@ -7,6 +7,8 @@ TMP_DIR = '/opt/tizer/tmp/'
 KDU_LIB = '/opt/tizer/kakadu/current/'
 MKFIFO = '/usr/bin/mkfifo'
 
+NUM_POOL_WORKERS = 5
+MESSAGES_PER_FETCH = 10
 
 IMAGE_MODES = {
     "L": "-no_palette",        # greyscale
