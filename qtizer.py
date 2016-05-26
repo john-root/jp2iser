@@ -2,6 +2,7 @@ from multiprocessing import Pool
 import qtizer_settings as settings
 from boto import sqs
 from boto.sqs.message import RawMessage
+from boto.utils import get_instance_metadata
 import json
 import requests
 import pytz
@@ -29,7 +30,7 @@ def main():
 
     try:
         while True:
-            if os.path.exists('/tmp/stop.txt'):
+            if os.path.exists('/tmp/stop.txt') or spot_termination_signalled():
                 sys.exit()
             messages = input_queue.get_messages(num_messages=messages_per_fetch, visibility_timeout=120,
                                                 wait_time_seconds=20)
@@ -116,6 +117,14 @@ def get_output_queue():
     conn = sqs.connect_to_region(settings.SQS_REGION)
     queue = conn.get_queue(settings.OUTPUT_QUEUE)
     return queue
+
+
+def spot_termination_signalled():
+    meta = get_instance_metadata()
+    if meta is not None and 'termination-time' in meta:
+        if meta['termination-time'] is not None:
+            return True
+    return False
 
 
 if __name__ == "__main__":
