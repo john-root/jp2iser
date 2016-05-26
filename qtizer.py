@@ -18,10 +18,7 @@ logger = None
 def main():
     input_queue = get_input_queue()
 
-    #logging.basicConfig(
-    #                    filename=settings.log_file,
-    #                    level=getattr(logging, settings.log_level))
-
+    # logging.basicConfig(filename=settings.log_file, level=getattr(logging, settings.log_level))
 
     # TODO : check queues not None
 
@@ -34,11 +31,12 @@ def main():
         while True:
             if os.path.exists('/tmp/stop.txt'):
                 sys.exit()
-            messages = input_queue.get_messages(num_messages=messages_per_fetch, visibility_timeout=120, wait_time_seconds=20)
+            messages = input_queue.get_messages(num_messages=messages_per_fetch, visibility_timeout=120,
+                                                wait_time_seconds=20)
             if len(messages) > 0:
                 pool.map(process_message, messages)
     except:
-        #logging.exception("Error getting messages")
+        # logging.exception("Error getting messages")
         print "Error getting messages"
 
 
@@ -60,7 +58,6 @@ def process_message(message):
 
 
 def call_tizer(payload):
-
     r = requests.post(settings.TIZER_SERVICE, json=payload)
     if r.status_code == 200:
         message = {
@@ -72,18 +69,16 @@ def call_tizer(payload):
         }
         message = convert_output_message_format(message)
         send_message(json.dumps(message))
-    # TODO : log
+        # TODO : log
 
 
 def send_message(payload):
-
     msg = RawMessage()
     msg.set_body(payload)
     output_queue.write(msg)
 
 
 def convert_input_message_format(message_payload):
-
     if 'params' in message_payload:
         message_payload = message_payload['params']
         if 'thumbSizes' in message_payload:
@@ -93,7 +88,6 @@ def convert_input_message_format(message_payload):
 
 
 def convert_output_message_format(message_payload):
-
     if 'params' in message_payload:
         for param in message_payload['params']:
             if param == 'thumbs':
@@ -126,6 +120,3 @@ def get_output_queue():
 
 if __name__ == "__main__":
     main()
-
-
-
