@@ -12,6 +12,7 @@ import os.path
 import sys
 
 output_queue = None
+error_queue = None
 logger = None
 
 
@@ -53,6 +54,7 @@ def process_message(message):
 
     except Exception as e:
         print e
+        send_message(message, error_queue)
 
     message.delete()
 
@@ -67,15 +69,15 @@ def call_tizer(payload):
             'params': r.json(),
 
         }
-        message = convert_output_message_format(message)
+        message = convert_output_message_format(message, output_queue)
         send_message(json.dumps(message))
         # TODO : log
 
 
-def send_message(payload):
+def send_message(payload, queue):
     msg = RawMessage()
     msg.set_body(payload)
-    output_queue.write(msg)
+    queue.write(msg)
 
 
 def convert_input_message_format(message_payload):
@@ -103,20 +105,27 @@ def convert_output_message_format(message_payload):
 
 def init_pool():
     global output_queue
+    global error_queue
     output_queue = get_output_queue()
+    error_queue = get_error_queue()
 
 
 def get_input_queue():
-    conn = sqs.connect_to_region(settings.SQS_REGION)
-    queue = conn.get_queue(settings.INPUT_QUEUE)
-    return queue
+    return get_queue(settings.INPUT_QUEUE)
 
 
 def get_output_queue():
-    conn = sqs.connect_to_region(settings.SQS_REGION)
-    queue = conn.get_queue(settings.OUTPUT_QUEUE)
-    return queue
+    return get_queue(settings.OUTPUT_QUEUE)
 
+
+def get_error_queue():
+    return get_queue(settings.ERROR_QUEUE)
+
+
+def get_queue(queue_name):
+    conn = sqs.connect_to_region(settings.SQS_REGION)
+    queue = conn.get_queue(queue_name)
+    return queue
 
 if __name__ == "__main__":
     main()
