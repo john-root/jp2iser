@@ -85,7 +85,7 @@ def get_kdu_ready_file(filepath, extension):
     # 'Currently accepted image file formats are: TIFF (including BigTIFF),
     #  RAW (big-endian), RAWL (little-endian), BMP, PBM, PGM and PPM, as
     #  determined by the file suffix.'
-    kdu_ready_formats = ['tif', 'bmp', 'raw', 'pbm', 'pgm', 'ppm']
+    kdu_ready_formats = ['bmp', 'raw', 'pbm', 'pgm', 'ppm']
 
     # during this processing we might be able to determine the mode. If not, leave as
     # none and we will do it later if reqired
@@ -93,7 +93,13 @@ def get_kdu_ready_file(filepath, extension):
 
     # we need to create a tiff for initial passing to kdu
 
-    if extension[:3] in kdu_ready_formats:
+    if extension == 'tif' or extension=='tiff':
+        with Image.open(filepath) as img:
+            if img.info['compression'] != 'raw':
+                fp_elements = os.path.split(filepath)
+                filepath = fp_elements[0] + 'raw_' + fp_elements[1]
+                img.save(filepath, compression='None')
+    elif extension[:3] in kdu_ready_formats:
         print filepath, 'can be converted directly'
     elif extension == 'pdf':
         filepath = rasterise_pdf(filepath)
