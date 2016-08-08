@@ -1,0 +1,3 @@
+$ brew install libjpeg-turbo8
+$ brew install little-cms2
+pip install -r requirements.txt

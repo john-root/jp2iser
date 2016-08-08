@@ -1,9 +1,9 @@
 {
   "@context" : "http://iiif.io/api/image/2/context.json",
-  "@id" : "{{id}}",
+  "@id" : "{{base_uri}}{{id}}",
   "protocol" : "http://iiif.io/api/image",
-  "width" : "{{width}}",
-  "height" : "{{height}}",
+  "width" : {{width}},
+  "height" : {{height}},
   "tiles" : [{
       "width" : 256,
 	  "scaleFactors" : [ {{scale_factors}} ]
