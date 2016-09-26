@@ -39,13 +39,14 @@ def process(filepath, destination=None, bounded_sizes=list(), bounded_folder=Non
     if optimisation not in CMD_COMPRESS:
         optimisation = "kdu_med"
 
+    result["jp2"] = jp2path
+
     if is_tile_optimised_jp2(filepath, extension):
         print filename, 'is already optimised for tiles, proceeding to next stage'
         shutil.copyfile(filepath, jp2path)
     else:
         kdu_ready, image_mode = get_kdu_ready_file(filepath, extension)
         make_jp2_from_image(kdu_ready, jp2path, optimisation, image_mode)
-        result["jp2"] = jp2path
         if filepath != kdu_ready:
             # TODO - do this properly
             print 'removing', kdu_ready, 'as it was a temporary file'
@@ -68,7 +69,7 @@ def process(filepath, destination=None, bounded_sizes=list(), bounded_folder=Non
     print 'operation time', elapsed
     result["clockTime"] = int(elapsed * 1000)
     result["optimisation"] = optimisation
-    result["jp2Info"] = base64.b64encode(jp2_info.encode('utf-8'))
+    result["infoJson"] = base64.b64encode(jp2_info.encode('utf-8'))
     result["width"] = jp2_data.width
     result["height"] = jp2_data.height
     return result
