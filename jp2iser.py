@@ -14,8 +14,7 @@ import subprocess
 from jp2_info import Jp2Info
 import uuid
 import pystache
-import json
-
+import piexif
 
 def path_parts(filepath):
     head, filename = os.path.split(filepath)
@@ -131,6 +130,9 @@ def get_tiff_from_pillow(filepath):
     print 'making tiff using pillow from', filepath
     new_file_path = get_output_file_path(filepath, 'tiff')
     im = Image.open(filepath)
+    orientation = get_orientation(im)
+    if orientation is not None and orientation > 1:
+        im = rotate_as_required(im, orientation)
     if 'icc_profile' in im.info:
         print "converting profile"
         src_profile = cStringIO.StringIO(im.info['icc_profile'])
@@ -139,6 +141,36 @@ def get_tiff_from_pillow(filepath):
 
     image_mode = im.mode
     return new_file_path, image_mode
+
+
+def get_orientation(image):
+
+    if "exif" in image.info:
+        exif_dict = piexif.load(image.info["exif"])
+        if piexif.ImageIFD.Orientation in exif_dict["0th"]:
+            orientation = exif_dict["0th"].pop(piexif.ImageIFD.Orientation)
+            return orientation
+    return None
+
+
+def rotate_as_required(image, orientation):
+
+    if orientation == 2:
+        image = image.transpose(Image.FLIP_LEFT_RIGHT)
+    elif orientation == 3:
+        image = image.rotate(180)
+    elif orientation == 4:
+        image = image.rotate(180).transpose(Image.FLIP_LEFT_RIGHT)
+    elif orientation == 5:
+        image = image.rotate(-90).transpose(Image.FLIP_LEFT_RIGHT)
+    elif orientation == 6:
+        image = image.rotate(-90)
+    elif orientation == 7:
+        image = image.rotate(90).transpose(Image.FLIP_LEFT_RIGHT)
+    elif orientation == 8:
+        image = image.rotate(90)
+
+    return image
 
 
 def get_tiff_from_kdu(filepath):
