@@ -16,6 +16,9 @@ def convert():
 
     data = request.get_json()
     job_id = data.get("jobId")
+    operation = data.get("operation")
+    if operation is None:
+        operation = "ingest"
     source = data.get("source")
     destination = data.get("destination")
     thumb_dir = data.get("thumbDir")
@@ -30,8 +33,7 @@ def convert():
     if source is not None:
         # currently no idea how this really went as no return value
         result = jp2iser.process(source, destination=destination, bounded_sizes=thumb_sizes, bounded_folder=thumb_dir,
-                                 optimisation=optimisation, jpeg_info_id=image_id)
-        result["status"] = "success"
+                                 optimisation=optimisation, jpeg_info_id=image_id, operation=operation)
         result["source"] = source
 
     else:

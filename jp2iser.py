@@ -22,56 +22,85 @@ def path_parts(filepath):
     return head, filename, namepart, extension.lower()[1:]
 
 
-def process(filepath, destination=None, bounded_sizes=list(), bounded_folder=None, optimisation="kdu_med", jpeg_info_id="ID"):
+def process(filepath, destination=None, bounded_sizes=list(), bounded_folder=None, optimisation="kdu_med",
+            jpeg_info_id="ID", operation="ingest"):
+
     # Convert image file into tile-optimised JP2 and optionally additional derivatives
     start = time.clock()
     result = {}
 
+    if operation not in ['ingest', 'derivatives-only']:
+        result["status"] = "error"
+        result["message"] = "Unknown operation"
+        get_elapsed(start)
+        return result
+
     head, filename, namepart, extension = path_parts(filepath)
     print '%s  -- [%s] - %s.%s' % (head, filename, namepart, extension)
 
-    print 'destination: %s' % destination
-    jp2path = destination or os.path.join(OUTPUT_DIR, namepart + '.jp2')
-    print 'Converting: ', filename
-    print 'We want to make a JP2 at: ', jp2path
+    if operation == "derivatives-only" and extension != "jp2":
+        result["status"] = "error"
+        result["message"] = "File type must be jpeg2000 for derivatives-only operation"
+        get_elapsed(start)
+        return result
 
-    if optimisation not in CMD_COMPRESS:
-        optimisation = "kdu_med"
+    if operation == "ingest":
 
-    result["jp2"] = jp2path
+        print 'destination: %s' % destination
+        jp2path = destination or os.path.join(OUTPUT_DIR, namepart + '.jp2')
+        print 'Converting: ', filename
+        print 'We want to make a JP2 at: ', jp2path
 
-    if is_tile_optimised_jp2(filepath, extension):
-        print filename, 'is already optimised for tiles, proceeding to next stage'
-        shutil.copyfile(filepath, jp2path)
-    else:
-        kdu_ready, image_mode = get_kdu_ready_file(filepath, extension)
-        make_jp2_from_image(kdu_ready, jp2path, optimisation, image_mode)
-        if filepath != kdu_ready:
-            # TODO - do this properly
-            print 'removing', kdu_ready, 'as it was a temporary file'
-            os.remove(kdu_ready)
+        if optimisation not in CMD_COMPRESS:
+            optimisation = "kdu_med"
+
+        result["jp2"] = jp2path
+
+        if is_tile_optimised_jp2(filepath, extension):
+            print filename, 'is already optimised for tiles, proceeding to next stage'
+            shutil.copyfile(filepath, jp2path)
+        else:
+            kdu_ready, image_mode = get_kdu_ready_file(filepath, extension)
+            make_jp2_from_image(kdu_ready, jp2path, optimisation, image_mode)
+            if filepath != kdu_ready:
+                # TODO - do this properly
+                print 'removing', kdu_ready, 'as it was a temporary file'
+                os.remove(kdu_ready)
+
+    else:  # operation == "derivatives-only":
+
+        # output path is input path
+        jp2path = filepath
 
     jp2_data = Jp2Info.from_jp2_file(jp2path)
-    jp2_info_template = open('jp2info.mustache').read()
+    jp2_info = get_jp2_info(jp2_data, jpeg_info_id)
 
-    jp2_info = pystache.render(jp2_info_template, {
+    if len(bounded_sizes) > 0:
+        make_derivatives(jp2_data, result, jp2path, bounded_sizes, bounded_folder)
+
+    result["status"] = "complete"
+    result["clockTime"] = get_elapsed(start)
+    result["optimisation"] = optimisation
+    result["infoJson"] = base64.b64encode(jp2_info.encode('utf-8'))
+    result["width"] = jp2_data.width
+    result["height"] = jp2_data.height
+    return result
+
+
+def get_jp2_info(jp2_data, jpeg_info_id):
+
+    jp2_info_template = open('jp2info.mustache').read()
+    return pystache.render(jp2_info_template, {
         "id": jpeg_info_id,
         "height": jp2_data.height,
         "width": jp2_data.width,
         "scale_factors": ",".join(map(str, get_scale_factors(jp2_data.width, jp2_data.height)))
     })
 
-    if len(bounded_sizes) > 0:
-        make_derivatives(jp2_data, result, jp2path, bounded_sizes, bounded_folder)
 
+def get_elapsed(start):
     elapsed = time.clock() - start
-    print 'operation time', elapsed
-    result["clockTime"] = int(elapsed * 1000)
-    result["optimisation"] = optimisation
-    result["infoJson"] = base64.b64encode(jp2_info.encode('utf-8'))
-    result["width"] = jp2_data.width
-    result["height"] = jp2_data.height
-    return result
+    return int(elapsed * 1000)
 
 
 def is_tile_optimised_jp2(filepath, extension):
