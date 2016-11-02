@@ -23,6 +23,10 @@ CMD_COMPRESS = {
             '"ORGgen_plt=yes" "ORGtparts=R" "Corder=RPCL" -rate 2 ' +
             '"Cprecincts={{256,256}},{{256,256}},{{256,256}},{{128,128}},' +
             '{{128,128}},{{64,64}},{{64,64}},{{32,32}},{{16,16}}"',
+    "kdu_med_tiles_layers":  '{kdu} -i {input} -o {output} Clevels=7 "Cblk={{64,64}}" "Cuse_sop=yes" {image_mode}  ' +
+            '"ORGgen_plt=yes" "ORGtparts=R" "Corder=RPCL" "Stiles={{256,256}}" Clayers=6 -rate 2 ' +
+            '"Cprecincts={{256,256}},{{256,256}},{{256,256}},{{128,128}},' +
+            '{{128,128}},{{64,64}},{{64,64}},{{32,32}},{{16,16}}"',
     "kdu_high": '{kdu} -i {input} -o {output} Clevels=7 "Cblk={{64,64}}" "Cuse_sop=yes" {image_mode}  ' +
             '"ORGgen_plt=yes" "ORGtparts=R" "Corder=RPCL" -rate 4 ' +
             '"Cprecincts={{256,256}},{{256,256}},{{256,256}},{{128,128}},' +
