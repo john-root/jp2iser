@@ -15,6 +15,7 @@ from jp2_info import Jp2Info
 import uuid
 import pystache
 import piexif
+from decimal import Context, ROUND_HALF_EVEN
 
 def path_parts(filepath):
     head, filename = os.path.split(filepath)
@@ -389,8 +390,13 @@ def confine(w, h, req_w, req_h):
     if w <= req_w and h <= req_h:
         return w, h
 
-    scale = min(req_w / (1.0 * w), req_h / (1.0 * h))
-    return tuple(map(lambda d: int(round(d * scale)), [w, h]))
+    context = Context(prec=17, rounding=ROUND_HALF_EVEN)
+    d_w = context.create_decimal(w)
+    d_req_w = context.create_decimal(req_w)
+    d_h = context.create_decimal(h)
+    d_req_h = context.create_decimal(req_h)
+    scale = min(d_req_w / d_w, d_req_h / d_h)
+    return tuple(map(lambda d: (d * scale).to_integral_value(), [d_w, d_h]))
 
 
 def get_closest_scale(req_w, req_h, full_w, full_h, scales):
