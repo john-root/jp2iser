@@ -395,8 +395,8 @@ def confine(w, h, req_w, req_h):
     d_req_w = context.create_decimal(req_w)
     d_h = context.create_decimal(h)
     d_req_h = context.create_decimal(req_h)
-    scale = min(d_req_w / d_w, d_req_h / d_h)
-    return tuple(map(lambda d: (d * scale).to_integral_value(), [d_w, d_h]))
+    scale = context.create_decimal(round(min(d_req_w / d_w, d_req_h / d_h), 17))
+    return tuple(map(lambda d: (d * scale).to_integral_exact(context=context), [d_w, d_h]))
 
 
 def get_closest_scale(req_w, req_h, full_w, full_h, scales):
