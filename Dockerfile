@@ -1,5 +1,4 @@
 FROM ubuntu
-MAINTAINER Adam Christie <adam.christie@digirati.co.uk>
 
 ENV KAKADU_APPS_LOCATION s3://dlcs-bootstrap-objects/kdu77-apps.tar.gz
 
