@@ -1,10 +1,10 @@
-KDU_COMPRESS = '/usr/local/bin/kakadu/kdu_compress'
-KDU_EXPAND = '/usr/local/bin/kakadu/kdu_expand'
+KDU_COMPRESS = '/usr/local/bin/kdu_compress'
+KDU_EXPAND = '/usr/local/bin/kdu_expand'
 
-OUTPUT_DIR = '/home/ubuntu/out/'
-TMP_DIR = '/home/ubuntu/jp2iser/tmp/'
+OUTPUT_DIR = '/opt/tizer/out/'
+TMP_DIR = '/opt/tizer/tmp/'
 
-KDU_LIB = '/usr/local/bin/kakadu'
+KDU_LIB = '/usr/local/bin'
 MKFIFO = '/usr/bin/mkfifo'
 
 IMAGE_MODES = {
@@ -23,6 +23,10 @@ CMD_COMPRESS = {
             '"ORGgen_plt=yes" "ORGtparts=R" "Corder=RPCL" -rate 2 ' +
             '"Cprecincts={{256,256}},{{256,256}},{{256,256}},{{128,128}},' +
             '{{128,128}},{{64,64}},{{64,64}},{{32,32}},{{16,16}}"',
+    "kdu_med_layers":  '{kdu} -i {input} -o {output} Clevels=7 "Cblk={{64,64}}" "Cuse_sop=yes" {image_mode}  ' +
+            '"ORGgen_plt=yes" "ORGtparts=R" "Corder=RPCL" Clayers=6 -rate 2 ' +
+            '"Cprecincts={{256,256}},{{256,256}},{{256,256}},{{128,128}},' +
+            '{{128,128}},{{64,64}},{{64,64}},{{32,32}},{{16,16}}"',
     "kdu_high": '{kdu} -i {input} -o {output} Clevels=7 "Cblk={{64,64}}" "Cuse_sop=yes" {image_mode}  ' +
             '"ORGgen_plt=yes" "ORGtparts=R" "Corder=RPCL" -rate 4 ' +
             '"Cprecincts={{256,256}},{{256,256}},{{256,256}},{{128,128}},' +
@@ -35,4 +39,4 @@ CMD_COMPRESS = {
 }
 
 map_profile_to_srgb = True
-srgb_profile_fp = '/usr/share/color/icc/colord/sRGB.icc'
+srgb_profile_fp = '/opt/tizer/sRGB.icc'

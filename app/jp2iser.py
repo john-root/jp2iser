@@ -14,8 +14,8 @@ import subprocess
 from jp2_info import Jp2Info
 import uuid
 import pystache
-import json
-
+import piexif
+from decimal import Context, ROUND_HALF_EVEN
 
 def path_parts(filepath):
     head, filename = os.path.split(filepath)
@@ -23,55 +23,85 @@ def path_parts(filepath):
     return head, filename, namepart, extension.lower()[1:]
 
 
-def process(filepath, destination=None, bounded_sizes=list(), bounded_folder=None, optimisation="kdu_med", jpeg_info_id="ID"):
+def process(filepath, destination=None, bounded_sizes=list(), bounded_folder=None, optimisation="kdu_med",
+            jpeg_info_id="ID", operation="ingest"):
+
     # Convert image file into tile-optimised JP2 and optionally additional derivatives
     start = time.clock()
     result = {}
 
+    if operation not in ['ingest', 'derivatives-only']:
+        result["status"] = "error"
+        result["message"] = "Unknown operation"
+        get_elapsed(start)
+        return result
+
     head, filename, namepart, extension = path_parts(filepath)
     print '%s  -- [%s] - %s.%s' % (head, filename, namepart, extension)
 
-    print 'destination: %s' % destination
-    jp2path = destination or os.path.join(OUTPUT_DIR, namepart + '.jp2')
-    print 'Converting: ', filename
-    print 'We want to make a JP2 at: ', jp2path
+    if operation == "derivatives-only" and extension != "jp2":
+        result["status"] = "error"
+        result["message"] = "File type must be jpeg2000 for derivatives-only operation"
+        get_elapsed(start)
+        return result
 
-    if optimisation not in CMD_COMPRESS:
-        optimisation = "kdu_med"
+    if operation == "ingest":
 
-    if is_tile_optimised_jp2(filepath, extension):
-        print filename, 'is already optimised for tiles, proceeding to next stage'
-        shutil.copyfile(filepath, jp2path)
-    else:
-        kdu_ready, image_mode = get_kdu_ready_file(filepath, extension)
-        make_jp2_from_image(kdu_ready, jp2path, optimisation, image_mode)
+        print 'destination: %s' % destination
+        jp2path = destination or os.path.join(OUTPUT_DIR, namepart + '.jp2')
+        print 'Converting: ', filename
+        print 'We want to make a JP2 at: ', jp2path
+
+        if optimisation not in CMD_COMPRESS:
+            optimisation = "kdu_med"
+
         result["jp2"] = jp2path
-        if filepath != kdu_ready:
-            # TODO - do this properly
-            print 'removing', kdu_ready, 'as it was a temporary file'
-            os.remove(kdu_ready)
+
+        if is_tile_optimised_jp2(filepath, extension):
+            print filename, 'is already optimised for tiles, proceeding to next stage'
+            shutil.copyfile(filepath, jp2path)
+        else:
+            kdu_ready, image_mode = get_kdu_ready_file(filepath, extension)
+            make_jp2_from_image(kdu_ready, jp2path, optimisation, image_mode)
+            if filepath != kdu_ready:
+                # TODO - do this properly
+                print 'removing', kdu_ready, 'as it was a temporary file'
+                os.remove(kdu_ready)
+
+    else:  # operation == "derivatives-only":
+
+        # output path is input path
+        jp2path = filepath
 
     jp2_data = Jp2Info.from_jp2_file(jp2path)
-    jp2_info_template = open('jp2info.mustache').read()
+    jp2_info = get_jp2_info(jp2_data, jpeg_info_id)
 
-    jp2_info = pystache.render(jp2_info_template, {
+    if len(bounded_sizes) > 0:
+        make_derivatives(jp2_data, result, jp2path, bounded_sizes, bounded_folder)
+
+    result["status"] = "complete"
+    result["clockTime"] = get_elapsed(start)
+    result["optimisation"] = optimisation
+    result["infoJson"] = base64.b64encode(jp2_info.encode('utf-8'))
+    result["width"] = jp2_data.width
+    result["height"] = jp2_data.height
+    return result
+
+
+def get_jp2_info(jp2_data, jpeg_info_id):
+
+    jp2_info_template = open('jp2info.mustache').read()
+    return pystache.render(jp2_info_template, {
         "id": jpeg_info_id,
         "height": jp2_data.height,
         "width": jp2_data.width,
         "scale_factors": ",".join(map(str, get_scale_factors(jp2_data.width, jp2_data.height)))
     })
 
-    if len(bounded_sizes) > 0:
-        make_derivatives(jp2_data, result, jp2path, bounded_sizes, bounded_folder)
 
+def get_elapsed(start):
     elapsed = time.clock() - start
-    print 'operation time', elapsed
-    result["clockTime"] = int(elapsed * 1000)
-    result["optimisation"] = optimisation
-    result["jp2Info"] = base64.b64encode(jp2_info.encode('utf-8'))
-    result["width"] = jp2_data.width
-    result["height"] = jp2_data.height
-    return result
+    return int(elapsed * 1000)
 
 
 def is_tile_optimised_jp2(filepath, extension):
@@ -88,7 +118,7 @@ def get_kdu_ready_file(filepath, extension):
     kdu_ready_formats = ['bmp', 'raw', 'pbm', 'pgm', 'ppm']
 
     # during this processing we might be able to determine the mode. If not, leave as
-    # none and we will do it later if reqired
+    # none and we will do it later if required
     image_mode = None
 
     # we need to create a tiff for initial passing to kdu
@@ -130,6 +160,9 @@ def get_tiff_from_pillow(filepath):
     print 'making tiff using pillow from', filepath
     new_file_path = get_output_file_path(filepath, 'tiff')
     im = Image.open(filepath)
+    orientation = get_orientation(im)
+    if orientation is not None and orientation > 1:
+        im = rotate_as_required(im, orientation)
     if 'icc_profile' in im.info:
         print "converting profile"
         src_profile = cStringIO.StringIO(im.info['icc_profile'])
@@ -138,6 +171,36 @@ def get_tiff_from_pillow(filepath):
 
     image_mode = im.mode
     return new_file_path, image_mode
+
+
+def get_orientation(image):
+
+    if "exif" in image.info:
+        exif_dict = piexif.load(image.info["exif"])
+        if piexif.ImageIFD.Orientation in exif_dict["0th"]:
+            orientation = exif_dict["0th"].pop(piexif.ImageIFD.Orientation)
+            return orientation
+    return None
+
+
+def rotate_as_required(image, orientation):
+
+    if orientation == 2:
+        image = image.transpose(Image.FLIP_LEFT_RIGHT)
+    elif orientation == 3:
+        image = image.rotate(180)
+    elif orientation == 4:
+        image = image.rotate(180).transpose(Image.FLIP_LEFT_RIGHT)
+    elif orientation == 5:
+        image = image.rotate(-90).transpose(Image.FLIP_LEFT_RIGHT)
+    elif orientation == 6:
+        image = image.rotate(-90)
+    elif orientation == 7:
+        image = image.rotate(90).transpose(Image.FLIP_LEFT_RIGHT)
+    elif orientation == 8:
+        image = image.rotate(90)
+
+    return image
 
 
 def get_tiff_from_kdu(filepath):
@@ -327,8 +390,13 @@ def confine(w, h, req_w, req_h):
     if w <= req_w and h <= req_h:
         return w, h
 
-    scale = min(req_w / (1.0 * w), req_h / (1.0 * h))
-    return tuple(map(lambda d: int(round(d * scale)), [w, h]))
+    context = Context(prec=17, rounding=ROUND_HALF_EVEN)
+    d_w = context.create_decimal(w)
+    d_req_w = context.create_decimal(req_w)
+    d_h = context.create_decimal(h)
+    d_req_h = context.create_decimal(req_h)
+    scale = context.create_decimal(round(min(d_req_w / d_w, d_req_h / d_h), 17))
+    return tuple(map(lambda d: (d * scale).to_integral_exact(context=context), [d_w, d_h]))
 
 
 def get_closest_scale(req_w, req_h, full_w, full_h, scales):

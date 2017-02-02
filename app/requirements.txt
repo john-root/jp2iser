@@ -1,0 +1,6 @@
+Pillow
+Flask
+Pystache
+piexif
+uwsgi
+awscli
