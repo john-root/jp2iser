@@ -10,6 +10,10 @@ application = Flask(__name__)
 app = application
 app.config.from_object(__name__)
 
+@app.route("/ping", methods=["GET"])
+def ping():
+    result = {"status": "working"}
+    return jsonify(result)
 
 @app.route("/convert", methods=["POST"])
 def convert():
