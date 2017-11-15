@@ -10,7 +10,8 @@ MKFIFO = '/usr/bin/mkfifo'
 IMAGE_MODES = {
     "L": "-no_palette",        # greyscale
     "1": "-no_palette",        # bitonal
-    "RGB": "-jp2_space sRGB"  # RGB
+    "RGB": "-jp2_space sRGB",  # RGB
+    "RGBA": "-jp2_space sRGB -jp2_alpha"
 }
 
 # note the double escape of braces for formatting
