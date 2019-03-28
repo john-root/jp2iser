@@ -166,7 +166,7 @@ def get_tiff_from_pillow(filepath):
     if 'icc_profile' in im.info:
         print "converting profile"
         src_profile = cStringIO.StringIO(im.info['icc_profile'])
-        im = profileToProfile(im, src_profile, srgb_profile_fp)
+        im = profileToProfile(im, src_profile, srgb_profile_fp, outputMode='RGB')
     im.save(new_file_path)  # , compression=None)
 
     image_mode = im.mode
