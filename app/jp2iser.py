@@ -128,7 +128,7 @@ def get_kdu_ready_file(filepath, extension):
             if img.info['compression'] != 'raw':
                 fp_elements = os.path.split(filepath)
                 filepath = fp_elements[0] + 'raw_' + fp_elements[1]
-                img.save(filepath, compression='None')
+                img.save(filepath, compression=None)
     elif extension[:3] in kdu_ready_formats:
         print filepath, 'can be converted directly'
     elif extension == 'pdf':
