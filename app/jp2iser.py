@@ -28,6 +28,7 @@ def process(filepath, destination=None, bounded_sizes=list(), bounded_folder=Non
             jpeg_info_id="ID", operation="ingest"):
 
     warnings.simplefilter('ignore', Image.DecompressionBombWarning)
+    Image.MAX_IMAGE_PIXELS = None
 
     # Convert image file into tile-optimised JP2 and optionally additional derivatives
     start = time.clock()
