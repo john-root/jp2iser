@@ -15,6 +15,7 @@ from jp2_info import Jp2Info
 import uuid
 import pystache
 import piexif
+import warnings
 from decimal import Context, ROUND_HALF_EVEN
 
 def path_parts(filepath):
@@ -25,6 +26,8 @@ def path_parts(filepath):
 
 def process(filepath, destination=None, bounded_sizes=list(), bounded_folder=None, optimisation="kdu_med",
             jpeg_info_id="ID", operation="ingest"):
+
+    warnings.simplefilter('ignore', Image.DecompressionBombWarning)
 
     # Convert image file into tile-optimised JP2 and optionally additional derivatives
     start = time.clock()
