@@ -15,6 +15,7 @@ from jp2_info import Jp2Info
 import uuid
 import pystache
 import piexif
+import warnings
 from decimal import Context, ROUND_HALF_EVEN
 
 def path_parts(filepath):
@@ -25,6 +26,9 @@ def path_parts(filepath):
 
 def process(filepath, destination=None, bounded_sizes=list(), bounded_folder=None, optimisation="kdu_med",
             jpeg_info_id="ID", operation="ingest"):
+
+    warnings.simplefilter('ignore', Image.DecompressionBombWarning)
+    Image.MAX_IMAGE_PIXELS = None
 
     # Convert image file into tile-optimised JP2 and optionally additional derivatives
     start = time.clock()
@@ -128,7 +132,7 @@ def get_kdu_ready_file(filepath, extension):
             if img.info['compression'] != 'raw':
                 fp_elements = os.path.split(filepath)
                 filepath = fp_elements[0] + 'raw_' + fp_elements[1]
-                img.save(filepath, compression='None')
+                img.save(filepath, compression=None)
     elif extension[:3] in kdu_ready_formats:
         print filepath, 'can be converted directly'
     elif extension == 'pdf':
@@ -166,7 +170,7 @@ def get_tiff_from_pillow(filepath):
     if 'icc_profile' in im.info:
         print "converting profile"
         src_profile = cStringIO.StringIO(im.info['icc_profile'])
-        im = profileToProfile(im, src_profile, srgb_profile_fp)
+        im = profileToProfile(im, src_profile, srgb_profile_fp, outputMode='RGB')
     im.save(new_file_path)  # , compression=None)
 
     image_mode = im.mode
